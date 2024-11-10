@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>CV Sorter || The Placement Cell, SRCC</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        /* General Reset */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(120deg, #e8f0f8, #d1e3f1);
+            color: #333;
+            animation: fadeIn 0.8s ease-in-out;
+        }
+
+        /* Container and Header Styling */
+        .container {
+            width: 90%;
+            max-width: 500px;
+            padding: 40px;
+            background: #ffffff;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            text-align: center;
+            transition: all 0.3s ease-in-out;
+            transform: translateY(0);
+        }
+        .container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+        }
+        h1 {
+            font-size: 28px;
+            color: #2b6777;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        /* Input Boxes and Button Styling */
+        .input-box {
+            margin-top: 20px;
+            text-align: left;
+        }
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+        textarea:focus, input[type="text"]:focus {
+            border-color: #2b6777;
+            box-shadow: 0px 0px 8px rgba(43, 103, 119, 0.5);
+            outline: none;
+        }
+
+        /* Button Styling */
+        button {
+            background-color: #2b6777;
+            color: white;
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        button:hover {
+            background-color: #23515a;
+            transform: translateY(-3px);
+        }
+
+        /* Progress Bar Styling */
+        .progress-container {
+            width: 100%;
+            margin-top: 20px;
+            background: #e0e8f0;
+            border-radius: 10px;
+            position: relative;
+        }
+        .progress-bar {
+            height: 30px;
+            width: 0%;
+            background-color: #2b6777;
+            color: white;
+            line-height: 30px;
+            border-radius: 10px;
+            text-align: center;
+            transition: width 0.4s ease;
+        }
+
+        /* Processing Status */
+        .status, .timer {
+            font-size: 16px;
+            margin-top: 10px;
+            color: #2b6777;
+        }
+
+/* Popup Notification */
+.popup {
+    display: none;
+    position: fixed;
+    top: 20px; /* Position it at the top */
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2b6777;
+    color: white;
+    padding: 15px 40px;
+    font-size: 16px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    display: flex;
+    align-items: center;
+}
+
+.popup.show {
+    display: flex;
+    opacity: 1;
+    transform: translateX(-50%) translateY(10px);
+}
+
+/* Tick Animation */
+.popup .tick-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+    position: relative;
+}
+
+.popup .tick-icon::before {
+    content: '';
+    width: 12px;
+    height: 6px;
+    border-left: 3px solid #2b6777;
+    border-bottom: 3px solid #2b6777;
+    transform: rotate(-45deg);
+    opacity: 0;
+    animation: tickAnimation 0.5s forwards ease 0.2s;
+}
+
+@keyframes tickAnimation {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+        /* Fade In Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CV Sorter || The Placement Cell, SRCC</h1>
+        <form id="download-form" onsubmit="startDownload(); return false;">
+            <div class="input-box">
+                <label for="company_name">Enter Company Name:</label>
+                <input type="text" id="company_name" name="company_name" placeholder="Company Name" required>
+            </div>
+            <div class="input-box">
+                <label for="file_names">Enter The Roll Numbers:</label>
+                <textarea id="file_names" rows="8" placeholder="2XBCXXX A&#10;2XBCXXX B&#10; .&#10; .&#10; ." required></textarea>
+            </div>
+            <button type="submit">Click The Button To Sort CVs</button>
+        </form>
+        <div id="progress-area" style="display:none;">
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar">0%</div>
+            </div>
+            <p class="status" id="file-status">Processing...</p>
+            <p class="timer" id="time-left">Estimated Time Remaining: Calculating...</p>
+        </div>
+        <div id="result" class="result" style="display:none;"></div>
+    </div>
+
+<!-- Popup Notification for Completion -->
+<div id="popup" class="popup">
+    <div class="tick-icon"></div>
+    Processing Complete!
+</div>
+</body>
+</html>
