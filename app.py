@@ -16,9 +16,20 @@ app = Flask(__name__, static_folder='static', template_folder='templates')
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Google Drive API credentials
-SERVICE_ACCOUNT_FILE = 'credentials.json'
+service_account_info = {
+    "type": os.getenv("GOOGLE_SERVICE_ACCOUNT_TYPE"),
+    "project_id": os.getenv("GOOGLE_SERVICE_ACCOUNT_PROJECT_ID"),
+    "private_key_id": os.getenv("GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY_ID"),
+    "private_key": os.getenv("GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY").replace("\\n", "\n"),  # Ensure correct formatting
+    "client_email": os.getenv("GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL"),
+    "client_id": os.getenv("GOOGLE_SERVICE_ACCOUNT_CLIENT_ID"),
+    "auth_uri": os.getenv("GOOGLE_SERVICE_ACCOUNT_AUTH_URI"),
+    "token_uri": os.getenv("GOOGLE_SERVICE_ACCOUNT_TOKEN_URI"),
+    "auth_provider_x509_cert_url": os.getenv("GOOGLE_SERVICE_ACCOUNT_AUTH_PROVIDER_X509_CERT_URL"),
+    "client_x509_cert_url": os.getenv("GOOGLE_SERVICE_ACCOUNT_CLIENT_X509_CERT_URL")
+}
 SCOPES = ['https://www.googleapis.com/auth/drive']
-creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+creds = service_account.Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
 drive_service = build('drive', 'v3', credentials=creds)
 
 # Google Drive Folder IDs
